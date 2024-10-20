@@ -17,7 +17,9 @@ function generateString(length: number): string {
 
 console.log("init");
 
-wws.on('connection', (ws: WebSocketServer) => {
+let lastPosition = new Map<string, Position>();
+
+wws.on('connection', (ws: WebSocket) => {
     console.log('New client connected!');
     let randomColor = '#' + Math.floor(Math.random()*16777215).toString(16);
     let randomName = generateString(10); 
@@ -26,10 +28,19 @@ wws.on('connection', (ws: WebSocketServer) => {
         pos.color = randomColor;
         pos.name = randomName;
         wws.clients.forEach((client: WebSocket) => {
-            console.log(JSON.stringify(pos));
+            //console.log(JSON.stringify(pos));
+            lastPosition.set(pos.name,pos);
             client.send(JSON.stringify(pos));
         });     
     });
+
+
+    console.log("Open triggered");
+    for (let value of lastPosition.values()) {
+        console.log(JSON.stringify(value));
+        ws.send(JSON.stringify(value));
+    }
+
 
     ws.on('close', () => {
         console.log('Client disconnected :(');
