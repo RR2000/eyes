@@ -3,6 +3,7 @@ const ws = new WebSocket('ws://localhost:9090');
 
 ws.onopen = () => {
     console.log('Connection is opened for the Client!');
+    document.body.textContent = greeter(user);
 };
 
 ws.onmessage = (event) => {
@@ -11,9 +12,9 @@ ws.onmessage = (event) => {
 
 function greeter(person: string) {
     ws.send('Hello from ' + person);
+    console.log('Message sent');
     return "Hello " + person;
 }
 
 let user = "Pippo";
-document.body.textContent = greeter(user);
 
