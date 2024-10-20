@@ -14,12 +14,23 @@ ws.onmessage = (event) => {
     let y:number = message.y - circle.offsetHeight / 2;
 
     console.log(circleStyle);
-    circleStyle.color = 'green';
-    circleStyle.top   =  y + "px";
-    circleStyle.left  =  x + "px";
+    //circleStyle.background-color = 'green';
+    circleStyle.top              =  y + "px";
+    circleStyle.left             =  x + "px";
     console.log('Received message from the server: ' + message);
 };
 
+document.addEventListener("touchstart", (event) => {
+    event.preventDefault();
+    let position = JSON.stringify({"x": event.touches[0].clientX, "y": event.touches[0].clientY});
+    ws.send(position);
+}, {passive: false});
+
+document.addEventListener("touchmove", (event) => {
+    event.preventDefault();
+    let position = JSON.stringify({"x": event.touches[0].clientX, "y": event.touches[0].clientY});
+    ws.send(position);
+}, {passive: false});
 
 document.addEventListener("mousemove", (event) => {
     let position = JSON.stringify({"x": event.clientX, "y": event.clientY});
