@@ -7,7 +7,16 @@ ws.onopen = () => {
 };
 
 ws.onmessage = (event) => {
-   let message = event.data;
+    let message = JSON.parse(event.data);
+    let circle = document.getElementById('circle')!!;
+    let circleStyle = circle.style;   
+    let x:number = message.x - circle.offsetWidth  / 2;
+    let y:number = message.y - circle.offsetHeight / 2;
+
+    console.log(circleStyle);
+    circleStyle.color = 'green';
+    circleStyle.top   =  y + "px";
+    circleStyle.left  =  x + "px";
     console.log('Received message from the server: ' + message);
 };
 
