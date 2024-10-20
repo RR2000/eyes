@@ -1,5 +1,5 @@
 // Use the built-in WebSocket API
-const ws = new WebSocket('ws://localhost:9090');
+const ws = new WebSocket('wss://raoulrondinella.dev/ws');
 const reader = new FileReader();
 
 ws.onopen = () => {
