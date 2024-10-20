@@ -1,40 +1,55 @@
-// Use the built-in WebSocket API
+import {Position} from "./Position";
 const ws = new WebSocket('wss://raoulrondinella.dev/ws');
 const reader = new FileReader();
 
-type Position = {
-    x: number;
-    y: number;
-}
+let color = "#DDDDDD";
+let name = "guest";
 
 ws.onopen = () => {
     console.log('Connection is opened for the Client!');
 };
 
 ws.onmessage = (event) => {
-    let message = JSON.parse(event.data);
-    let circle = document.getElementById('circle')!!;
-    let circleStyle = circle.style;   
+    let message: Position = JSON.parse(event.data);
+
+    if(message.name == "guest")
+        return;
+
+    console.log(message.name);
+
+    let circle = document.getElementById(message.name);
+
+    if(circle === null){
+        circle = document.createElement("span");
+        circle.setAttribute("id",message.name);
+        circle.setAttribute("class", "dot");
+        document.body.appendChild(circle);
+    }
+
+    let circleStyle = circle.style;
+    color = message.color;
+    name = message.name;
     let x:number = message.x;
     let y:number = message.y;
     x = x - (circle.offsetWidth / window.innerWidth / 2);
     y = y - (circle.offsetHeight / window.innerHeight / 2);
 
     console.log(circleStyle);
-    //circleStyle.background-color = 'green';
-    circleStyle.top              =  (y * 100) + "%";
-    circleStyle.left             =  (x * 100) + "%";
-    console.log('Received message from the server: ' + message);
+    circleStyle.backgroundColor  = color;
+    circleStyle.top              = (y * 100) + "%";
+    circleStyle.left             = (x * 100) + "%";
+    console.log('Received message from the server: ' + JSON.stringify(message));
+
 };
 
 function computePosition(raw_x: number, raw_y: number): Position {
-    let circle = document.getElementById('circle')!!;
-    let circleStyle = circle.style;   
     let  x = raw_x / window.innerWidth;
     let  y = raw_y / window.innerHeight;
     let position: Position = {
         "x": x,
-        "y": y
+        "y": y,
+        "name": name,
+        "color": color
     }
     return position;
 }
