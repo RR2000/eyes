@@ -17,18 +17,27 @@ ws.onmessage = (event) => {
 
     console.log(message.name);
 
-    let circle = document.getElementById(message.name);
+    let circle = document.getElementById(message.name!!);
 
     if(circle === null){
         circle = document.createElement("span");
-        circle.setAttribute("id",message.name);
+        circle.setAttribute("id",message.name!!);
         circle.setAttribute("class", "dot");
         document.body.appendChild(circle);
     }
 
     let circleStyle = circle.style;
-    color = message.color;
-    name = message.name;
+    let remainPerc = message.sizePerc!!;
+
+    circleStyle.width = (100 * remainPerc) + "px";
+    circleStyle.height = (100 * remainPerc) + "px";
+
+    console.log(Date.now());
+    console.log(message.until);
+    console.log(remainPerc);
+
+    color = message.color!!;
+    name = message.name!!;
     let x:number = message.x;
     let y:number = message.y;
     x = x - (circle.offsetWidth / window.innerWidth / 2);
@@ -48,8 +57,10 @@ function computePosition(raw_x: number, raw_y: number): Position {
     let position: Position = {
         "x": x,
         "y": y,
-        "name": name,
-        "color": color
+        "sizePerc": null,
+        "name": null,
+        "color": null,
+        "until": null
     }
     return position;
 }
@@ -74,6 +85,7 @@ document.addEventListener("mousemove", (event) => {
     let x = event.clientX;
     let y = event.clientY;
     let position = JSON.stringify(computePosition(x, y));
+    console.log(position);
     ws.send(position);
 });
 

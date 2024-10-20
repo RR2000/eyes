@@ -1,6 +1,8 @@
 export interface Position {
-    name: string;
-    color: string;
+    name: string | null;
+    color: string | null;
     x: number;
     y: number;
+    until: number | null;
+    sizePerc: number | null;
 }
