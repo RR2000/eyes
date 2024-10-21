@@ -15,40 +15,41 @@ ws.onmessage = (event) => {
     if(message.name == "guest")
         return;
 
-    console.log(message.name);
+    //oonsole.log(message.name);
 
-    let circle = document.getElementById(message.name!!);
+    let stage = document.getElementById(message.name!!);
+    if(stage === null){
+        stage = document.createElement("section");
+        stage.setAttribute("id",message.name!!);
+        stage.setAttribute("class", "stage");
+        let figure = document.createElement("figure");
+        figure.setAttribute("class", "ball");
+        let iris = document.createElement("span");
+        iris.setAttribute("class", "iris");
+        let shadow = document.createElement("span");
+        shadow.setAttribute("class", "shadow");
 
-    if(circle === null){
-        circle = document.createElement("span");
-        circle.setAttribute("id",message.name!!);
-        circle.setAttribute("class", "dot");
-        document.body.appendChild(circle);
+        figure.appendChild(shadow);
+        figure.appendChild(iris);
+        stage.appendChild(figure);
+        document.body.appendChild(stage);
     }
 
-    let circleStyle = circle.style;
+    let circleStyle = stage.style;
     let remainPerc = message.sizePerc!!;
+    let x = message.x; //this is a number between 0 and 1
+    let y = message.y; //this is a number between 0 and 1
 
-    circleStyle.width = (100 * remainPerc) + "px";
-    circleStyle.height = (100 * remainPerc) + "px";
+    x = x - (stage.offsetWidth / 2)/ window.innerWidth;
+    y = y - (stage.offsetHeight / 2) / window.innerHeight;
 
-    console.log(Date.now());
-    console.log(message.until);
-    console.log(remainPerc);
+    let xPerc = (x ) * 100;
+    let yPerc = (y) * 100;
 
+    circleStyle.left = `${xPerc}%`;
+    circleStyle.top = `${yPerc}%`;
     color = message.color!!;
     name = message.name!!;
-    let x:number = message.x;
-    let y:number = message.y;
-    x = x - (circle.offsetWidth / window.innerWidth / 2);
-    y = y - (circle.offsetHeight / window.innerHeight / 2);
-
-    console.log(circleStyle);
-    circleStyle.backgroundColor  = color;
-    circleStyle.top              = (y * 100) + "%";
-    circleStyle.left             = (x * 100) + "%";
-    console.log('Received message from the server: ' + JSON.stringify(message));
-
 };
 
 function computePosition(raw_x: number, raw_y: number): Position {
@@ -87,7 +88,7 @@ document.addEventListener("mousemove", (event) => {
     let x = event.clientX;
     let y = event.clientY;
     let position = JSON.stringify(computePosition(x, y));
-    console.log(position);
+    //console.log(position);
     ws.send(position);
 });
 

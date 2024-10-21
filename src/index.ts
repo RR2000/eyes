@@ -17,12 +17,34 @@ function generateString(length: number): string {
 
 console.log("init");
 
+
 let lastPosition = new Map<string, Position>();
 let wsMap = new Map<string, WebSocket>();
+let npObjects = new Map<string, Position>();
 const maxTime = 60 * 1000;
 const ping = 5;
 
+let speed = 0.005; //percentual per seconds
+let speedPerPing = 0.05 / (1000 / ping)
+
+npObjects.set("ball", {
+    "name": "ball",
+    "x": 0.5,
+    "y": 0.5,
+    "sent": Date.now(),
+    "color": "black",
+    "sizePerc": 1,
+    "until": 0
+});
+
 function updatePositions() {
+    for (let [key, value] of npObjects) {
+        for (let ws of wsMap.values()) {
+            value.x = (value.x + speedPerPing) % 1;
+            ws.send(JSON.stringify(value));
+        }
+    }
+
     for (let [key, value] of lastPosition) {
         value.sizePerc = (value.until!! - Date.now()) / maxTime;
         if (value.sizePerc < 0) {
