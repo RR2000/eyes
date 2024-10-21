@@ -52,9 +52,11 @@ ws.onmessage = (event) => {
 };
 
 function computePosition(raw_x: number, raw_y: number): Position {
-    let  x = raw_x / window.innerWidth;
-    let  y = raw_y / window.innerHeight;
+    let x = raw_x / window.innerWidth;
+    let y = raw_y / window.innerHeight;
+    let now = Date.now();
     let position: Position = {
+        "sent": now,
         "x": x,
         "y": y,
         "sizePerc": null,

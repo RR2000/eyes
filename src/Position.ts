@@ -1,4 +1,5 @@
 export interface Position {
+    sent: number;
     name: string | null;
     color: string | null;
     x: number;

@@ -20,8 +20,9 @@ console.log("init");
 let lastPosition = new Map<string, Position>();
 let wsMap = new Map<string, WebSocket>();
 const maxTime = 60 * 1000;
+const ping = 5;
 
-function updatePositions(name: string) {
+function updatePositions() {
     for (let [key, value] of lastPosition) {
         value.sizePerc = (value.until!! - Date.now()) / maxTime;
         if (value.sizePerc < 0) {
@@ -37,6 +38,9 @@ function updatePositions(name: string) {
     }
 }
 
+setInterval(() => updatePositions(), ping);
+
+
 wws.on('connection', (ws: WebSocket) => {
     console.log('New client connected!');
     let randomColor = '#' + Math.floor(Math.random()*16777215).toString(16);
@@ -44,6 +48,14 @@ wws.on('connection', (ws: WebSocket) => {
     wsMap.set(randomName, ws);
     ws.on('message', (message: Buffer) => {
         let pos: Position = JSON.parse(message.toString());
+        pos.sent = Date.now();
+
+        const lastPos = lastPosition.get(randomName);
+
+        if (lastPos?.sent !== undefined && pos.sent <= lastPos.sent + ping) {
+            return;
+        }
+
         pos.color = randomColor;
         pos.name = randomName;
         pos.sizePerc = 1;
@@ -54,9 +66,6 @@ wws.on('connection', (ws: WebSocket) => {
         });
 
     });
-
-    updatePositions(randomName);
-    const intervalId = setInterval(() => updatePositions(randomName), 200);
 
     console.log("Open triggered");
     ws.on('close', () => {
