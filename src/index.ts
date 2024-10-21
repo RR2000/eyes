@@ -53,15 +53,34 @@ function updatePositions() {
         }
         if(wsMap.has(key))
             value.sizePerc = 1;
-
+        for(let [key, extObj] of npObjects){
+            if(isColliding(value, extObj)){
+                value.color = 'red';  
+            } else {
+                value.color = 'blue';
+            }
+        }
+ 
         for (let ws of wsMap.values()) {
             ws.send(JSON.stringify(value));
         }
-    }
+
+   }
 }
 
 setInterval(() => updatePositions(), ping);
 
+function isColliding(pos1: Position, pos2: Position): boolean {
+    let x1 = pos1.x;
+    let y1 = pos1.y;
+
+    let x2 = pos2.x;
+    let y2 = pos2.y;
+
+    let distance = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+    
+    return distance <= 0.075;
+}
 
 wws.on('connection', (ws: WebSocket) => {
     console.log('New client connected!');
@@ -78,7 +97,7 @@ wws.on('connection', (ws: WebSocket) => {
             return;
         }
 
-        pos.color = randomColor;
+        pos.color = lastPos?.color ?? null;
         pos.name = randomName;
         pos.sizePerc = 1;
         pos.until = Date.now() + maxTime;

@@ -43,12 +43,18 @@ ws.onmessage = (event) => {
     x = x - (stage.offsetWidth / 2)/ window.innerWidth;
     y = y - (stage.offsetHeight / 2) / window.innerHeight;
 
-    let xPerc = (x ) * 100;
+    let xPerc = (x) * 100;
     let yPerc = (y) * 100;
+    
+    const ballElement = <HTMLElement>stage.getElementsByClassName("ball")[0];
 
     circleStyle.left = `${xPerc}%`;
     circleStyle.top = `${yPerc}%`;
     color = message.color!!;
+    if(ballElement.style.backgroundColor != color){
+        console.log("changed color from:\"" + ballElement.style.backgroundColor + "\" to \"" + color + "\"" );
+        ballElement.style.backgroundColor = color;
+   }
     name = message.name!!;
 };
 
