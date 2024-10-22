@@ -34,9 +34,11 @@ ws.onmessage = (event) => {
         stage.appendChild(figure);
         document.body.appendChild(stage);
     }
+    let remainPerc = message.sizePerc!!;
+    if(remainPerc < 0.001)
+        stage.remove();
 
     let circleStyle = stage.style;
-    let remainPerc = message.sizePerc!!;
     let x = message.x; //this is a number between 0 and 1
     let y = message.y; //this is a number between 0 and 1
 
@@ -52,9 +54,10 @@ ws.onmessage = (event) => {
     circleStyle.top = `${yPerc}%`;
     color = message.color!!;
     if(ballElement.style.backgroundColor != color){
-        console.log("changed color from:\"" + ballElement.style.backgroundColor + "\" to \"" + color + "\"" );
         ballElement.style.backgroundColor = color;
-   }
+    }
+    stage.style.transform = ('scale(' + remainPerc + ')');
+
     name = message.name!!;
 };
 
