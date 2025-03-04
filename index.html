@@ -8,6 +8,8 @@ html {
 body {
     overflow-y: hidden;
     overflow-x: hidden;
+    display: flex;
+    justify-content: center;
 }
 
 .iris {
@@ -92,8 +94,23 @@ body {
       position: relative;
       background: radial-gradient(circle at 50% 40%, #fcfcfc, #efeff1 66%, #9b5050);
   }
+
+    #square {
+        overflow: hidden;
+        position: absolute;
+        background: darkgreen;
+        
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        
+        width: min(100vw, 100vh);
+        height: min(100vw, 100vh);
+    }
+
     </style>
     <body>
+        <div id="square"></div>
         <script src="../dist/greeter.js" type="module"></script>
     </body>
 </html>

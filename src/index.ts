@@ -56,8 +56,6 @@ function updatePositions() {
         for(let [key, extObj] of npObjects){
             if(isColliding(value, extObj)){
                 value.color = 'red';  
-            } else {
-                value.color = 'blue';
             }
         }
  
@@ -97,7 +95,7 @@ wws.on('connection', (ws: WebSocket) => {
             return;
         }
 
-        pos.color = lastPos?.color ?? null;
+        pos.color = randomColor;
         pos.name = randomName;
         pos.sizePerc = 1;
         pos.until = Date.now() + maxTime;

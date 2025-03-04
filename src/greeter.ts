@@ -2,13 +2,13 @@ import {Position} from "./Position";
 const ws = new WebSocket('wss://raoulrondinella.dev/ws');
 const reader = new FileReader();
 
-let color = "#DDDDDD";
 let name = "guest";
 
 ws.onopen = () => {
     console.log('Connection is opened for the Client!');
 };
 
+let square = document.getElementById("square")!!;
 ws.onmessage = (event) => {
     let message: Position = JSON.parse(event.data);
 
@@ -32,7 +32,7 @@ ws.onmessage = (event) => {
         figure.appendChild(shadow);
         figure.appendChild(iris);
         stage.appendChild(figure);
-        document.body.appendChild(stage);
+        square.appendChild(stage);
     }
     let remainPerc = message.sizePerc!!;
     if(remainPerc < 0.001)
@@ -42,19 +42,19 @@ ws.onmessage = (event) => {
     let x = message.x; //this is a number between 0 and 1
     let y = message.y; //this is a number between 0 and 1
 
-    x = x - (stage.offsetWidth / 2)/ window.innerWidth;
-    y = y - (stage.offsetHeight / 2) / window.innerHeight;
+    //square.getBoundingClientRect().width);
+    x = x - (stage.offsetWidth / 2) / square.getBoundingClientRect().width;
+    y = y - (stage.offsetHeight / 2) / square.getBoundingClientRect().height;
 
     let xPerc = (x) * 100;
     let yPerc = (y) * 100;
     
-    const ballElement = <HTMLElement>stage.getElementsByClassName("ball")[0];
+    const irisElement = <HTMLElement>stage.getElementsByClassName("iris")[0];
 
     circleStyle.left = `${xPerc}%`;
     circleStyle.top = `${yPerc}%`;
-    color = message.color!!;
-    if(ballElement.style.backgroundColor != color){
-        ballElement.style.backgroundColor = color;
+    if(message.color && irisElement.style.background != message.color){
+        irisElement.style.background = message.color;
     }
     stage.style.transform = ('scale(' + remainPerc + ')');
 
