@@ -10,6 +10,7 @@ import {
   HIT_MS,
   createRateLimit,
   isColliding,
+  mixHues,
   newBall,
   parseClientMessage,
   round4,
@@ -19,6 +20,7 @@ import {
   type RateVerdict,
   type ServerMessage,
 } from '../shared/game.js';
+import { HUE_MAX, HUE_MIN, hueToHex } from '../shared/color.js';
 
 export interface ServerOptions {
   port: number;
@@ -35,6 +37,8 @@ export interface ServerOptions {
   maxMessageBytes?: number;
   tickMs?: number;
   heartbeatMs?: number;
+  /** Source of the players' colours (tests pass a fixed one). */
+  random?: () => number;
 }
 
 export interface GameServer {
@@ -47,6 +51,7 @@ export interface GameServer {
 interface Player {
   id: string;
   hue: number;
+  baseHue: number;
   x: number;
   y: number;
   moved: boolean;
@@ -116,6 +121,7 @@ export async function startServer(options: ServerOptions): Promise<GameServer> {
   const maxMessagesPerSecond = options.maxMessagesPerSecond ?? 60;
   const tickMs = options.tickMs ?? 50;
   const heartbeatMs = options.heartbeatMs ?? 30_000;
+  const random = options.random ?? Math.random;
   const files = loadStaticFiles(options.publicDir, options.distDir);
 
   const players = new Map<string, Player>();
@@ -175,14 +181,16 @@ export async function startServer(options: ServerOptions): Promise<GameServer> {
 
     const player: Player = {
       id: randomBytes(6).toString('base64url'),
-      // anything but red, which means "hit"
-      hue: 30 + Math.floor(Math.random() * 300),
+      hue: 0,
+      baseHue: 0,
       x: 0.5,
       y: 0.5,
       moved: false,
       hitUntil: 0,
       goneAt: null,
     };
+    // anything but red, which means "hit" (see color.ts)
+    player.hue = player.baseHue = HUE_MIN + Math.floor(random() * (HUE_MAX - HUE_MIN + 1));
     players.set(player.id, player);
     const rate = createRateLimit(maxMessagesPerSecond);
     send(ws, JSON.stringify({ t: 'hello', id: player.id } satisfies ServerMessage));
@@ -223,6 +231,11 @@ export async function startServer(options: ServerOptions): Promise<GameServer> {
     lastTick = now;
     if (active === 0) return;
     ball = stepBall(ball, dt);
+    // colours: decided here once per tick, so every client shows the same mix
+    const playing = [...players.values()].filter((p) => p.moved && p.goneAt === null);
+    mixHues(playing, dt).forEach((hue, i) => {
+      playing[i]!.hue = hue;
+    });
     const visible: PlayerState[] = [];
     for (const p of players.values()) {
       if (!p.moved) continue;
@@ -236,7 +249,7 @@ export async function startServer(options: ServerOptions): Promise<GameServer> {
       } else if (isColliding(p, ball)) {
         p.hitUntil = now + HIT_MS;
       }
-      visible.push({ id: p.id, x: round4(p.x), y: round4(p.y), hue: p.hue, hit: p.hitUntil > now, size: round4(size) });
+      visible.push({ id: p.id, x: round4(p.x), y: round4(p.y), color: hueToHex(p.hue), hit: p.hitUntil > now, size: round4(size) });
     }
     const text = JSON.stringify({ t: 'state', ball: { x: round4(ball.x), y: round4(ball.y) }, players: visible } satisfies ServerMessage);
     for (const ws of wss.clients) send(ws, text);

@@ -82,11 +82,13 @@ body {
   height: 40%;
   margin: 30%;
   border-radius: 50%;
+  /* --iris comes from the server; the shades are mixed in OKLab too (solid colour where color-mix is missing) */
+  background: var(--iris, #3a8fc0);
   background: radial-gradient(
     circle at 50% 50%,
-    hsl(var(--hue, 200) 70% 30%) 0%,
-    hsl(var(--hue, 200) 85% 70%) 30%,
-    hsl(var(--hue, 200) 50% 45%) 100%
+    color-mix(in oklab, var(--iris, #3a8fc0), black 45%) 0%,
+    color-mix(in oklab, var(--iris, #3a8fc0), white 30%) 30%,
+    var(--iris, #3a8fc0) 100%
   );
   animation: move-eye-skew 5s ease-out infinite;
 }
