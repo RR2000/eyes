@@ -121,6 +121,8 @@ export async function startServer(options: ServerOptions): Promise<GameServer> {
   const players = new Map<string, Player>();
   const perIp = new Map<string, number>();
   const alive = new WeakSet<WebSocket>();
+  // accepted players only: a refused socket stays in wss.clients until its close handshake ends
+  let active = 0;
   let ball: Ball = newBall();
   let lastTick = Date.now();
 
@@ -132,7 +134,7 @@ export async function startServer(options: ServerOptions): Promise<GameServer> {
     }
     if (path === '/healthz') {
       res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
-      res.end(JSON.stringify({ ok: true, connections: wss.clients.size }));
+      res.end(JSON.stringify({ ok: true, connections: active }));
       return;
     }
     const file = files.get(path);
@@ -163,11 +165,12 @@ export async function startServer(options: ServerOptions): Promise<GameServer> {
   function onConnection(ws: WebSocket, req: IncomingMessage) {
     const ip = clientAddress(req, trustProxy);
     const fromIp = perIp.get(ip) ?? 0;
-    if (wss.clients.size > maxClients || fromIp >= maxClientsPerIp) {
+    if (active >= maxClients || fromIp >= maxClientsPerIp) {
       ws.close(1013, 'server full');
       return;
     }
     perIp.set(ip, fromIp + 1);
+    active++;
     alive.add(ws);
 
     const player: Player = {
@@ -199,6 +202,7 @@ export async function startServer(options: ServerOptions): Promise<GameServer> {
       player.moved = true;
     });
     ws.on('close', () => {
+      active--;
       const left = (perIp.get(ip) ?? 1) - 1;
       if (left > 0) perIp.set(ip, left);
       else perIp.delete(ip);
@@ -217,7 +221,7 @@ export async function startServer(options: ServerOptions): Promise<GameServer> {
     const now = Date.now();
     const dt = now - lastTick;
     lastTick = now;
-    if (wss.clients.size === 0) return;
+    if (active === 0) return;
     ball = stepBall(ball, dt);
     const visible: PlayerState[] = [];
     for (const p of players.values()) {
@@ -262,7 +266,7 @@ export async function startServer(options: ServerOptions): Promise<GameServer> {
   return {
     url: `http://${shownHost}:${port}`,
     port,
-    connections: () => wss.clients.size,
+    connections: () => active,
     close: async () => {
       clearInterval(tickTimer);
       clearInterval(heartbeatTimer);
