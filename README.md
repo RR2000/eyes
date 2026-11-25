@@ -2,7 +2,8 @@
 
 A small multiplayer toy written in TypeScript. Every visitor is an eye that follows their mouse or finger,
 and everyone sees everyone else in real time over a WebSocket. A ball bounces around the field: whoever it
-touches turns red for a moment.
+touches turns red for a moment. Eyes that touch each other slowly mix their colours, and drift back to their
+own once apart.
 
 Demo: https://eyes.raoulrondinella.dev
 
@@ -16,12 +17,18 @@ only, and logs nothing about who connects.
   20 times per second.
 - `src/client`: the browser code, plain ES modules compiled by `tsc` (no bundler). It works out the WebSocket
   address from the page (`wss://` on https) and reconnects on its own with a backoff.
-- `src/shared`: game rules and message types used by both sides. Coordinates are relative to the square
+- `src/shared`: game rules, colours and message types used by both sides. Coordinates are relative to the square
   field (0..1), so every screen size sees the same game.
 - `public`: `index.html`, `style.css` and the icon.
 
+Colours: every player is a hue in OKLCH at fixed lightness and chroma (`src/shared/color.ts`). Mixing averages
+hues, so the result is as bright and saturated as the originals instead of the grey or brown an RGB average
+gives, and every colour keeps at least 3:1 contrast with the white of the eye and with the pupil. Hues stay
+out of the red range, which means "hit". The server mixes them on every tick and sends the final `#rrggbb`,
+so all clients show the same colours.
+
 Protocol: the browser sends `{"x":0.42,"y":0.17}`; the server sends `{"t":"hello","id":...}` once, then
-`{"t":"state","ball":{x,y},"players":[{id,x,y,hue,hit,size}]}` on every tick.
+`{"t":"state","ball":{x,y},"players":[{id,x,y,color,hit,size}]}` on every tick.
 
 Limits for a public server, per connection unless noted:
 

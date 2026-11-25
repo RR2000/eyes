@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { after, before, describe, it } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { WebSocket } from 'ws';
+import { HUE_MAX, HUE_MIN, hueToHex } from '../shared/color.js';
 import type { ServerMessage } from '../shared/game.js';
 import { startServer, type GameServer, type ServerOptions } from '../server/server.js';
 
@@ -15,6 +16,19 @@ const base: ServerOptions = {
 };
 
 type State = Extract<ServerMessage, { t: 'state' }>;
+
+/** The hue behind a colour sent by the server (closest match, to 0.1 degrees). */
+function hueOf(hex: string): number {
+  const rgb = (h: string) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+  const target = rgb(hex);
+  let best = HUE_MIN;
+  let bestD = Infinity;
+  for (let h = HUE_MIN; h <= HUE_MAX; h += 0.1) {
+    const d = Math.hypot(...rgb(hueToHex(h)).map((v, i) => v - target[i]!));
+    if (d < bestD) [best, bestD] = [h, d];
+  }
+  return best;
+}
 
 /** A client that keeps every message it receives. */
 class Client {
@@ -114,12 +128,45 @@ describe('websocket', () => {
       const seenByB = await b.waitForState((s) => s.players.length === 2);
       const pa = seenByB.players.find((p) => p.id === idA)!;
       assert.deepEqual([pa.x, pa.y, pa.size], [0.1, 0.2, 1]);
-      assert.ok(pa.hue >= 30 && pa.hue < 330, 'never red');
+      assert.match(pa.color, /^#[0-9a-f]{6}$/);
       await a.waitForState((s) => s.players.some((p) => p.id === idB && p.x === 0.9));
 
       a.close();
       const fading = await b.waitForState((s) => s.players.some((p) => p.id === idA && p.size < 1));
       assert.ok(fading.players.find((p) => p.id === idB)!.size === 1);
+      b.close();
+    });
+  });
+
+  it('two eyes that touch mix their colours, the same for both clients', async () => {
+    // first player at one end of the hues, second at the other
+    const hues = [0, 0.9999];
+    await withServer({ random: () => hues.shift() ?? 0.5 }, async (_server, url) => {
+      const a = new Client(url);
+      const idA = await a.id();
+      const b = new Client(url);
+      const idB = await b.id();
+      const colors = (s: State) => [s.players.find((p) => p.id === idA)?.color, s.players.find((p) => p.id === idB)?.color];
+      a.send({ x: 0.1, y: 0.1 });
+      b.send({ x: 0.9, y: 0.9 });
+      const apart = colors(await a.waitForState((s) => s.players.length === 2));
+      assert.deepEqual(apart, [hueToHex(HUE_MIN), hueToHex(HUE_MAX)]);
+
+      // on top of each other for 1.5 s
+      a.send({ x: 0.5, y: 0.1 });
+      b.send({ x: 0.52, y: 0.1 });
+      await new Promise((r) => setTimeout(r, 1500));
+      const lastA = [...a.messages].reverse().find((m): m is State => m.t === 'state')!;
+      const [ca, cb] = colors(lastA);
+      assert.notEqual(ca, apart[0], 'A changed colour');
+      assert.notEqual(cb, apart[1], 'B changed colour');
+      const [ha, hb] = [hueOf(ca!), hueOf(cb!)];
+      assert.ok(ha > HUE_MIN + 40 && hb < HUE_MAX - 40, `both moved towards the middle: ${ha} ${hb}`);
+      assert.ok(hb - ha < (HUE_MAX - HUE_MIN) / 2, `much closer to each other: ${ha} ${hb}`);
+      // B received the very same state (same ball position): same colours
+      const sameTick = await b.waitForState((s) => s.ball.x === lastA.ball.x && s.ball.y === lastA.ball.y);
+      assert.deepEqual(colors(sameTick), [ca, cb]);
+      a.close();
       b.close();
     });
   });

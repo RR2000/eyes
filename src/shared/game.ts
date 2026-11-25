@@ -9,6 +9,10 @@ export const BALL_SPEED = 0.3;
 export const HIT_MS = 2000;
 /** How long a player who left keeps shrinking before disappearing. */
 export const FADE_MS = 10_000;
+/** Time constant of the colour mix: two eyes touching meet halfway in about this long. */
+export const MIX_MS = 1500;
+/** Time constant of the way back to the own colour once apart. */
+export const RETURN_MS = 8000;
 
 export interface Point {
   x: number;
@@ -25,8 +29,8 @@ export type ClientMessage = Point;
 
 export interface PlayerState extends Point {
   id: string;
-  /** Hue of the iris, 0..359. */
-  hue: number;
+  /** Iris colour, #rrggbb, decided by the server (see color.ts). */
+  color: string;
   /** True while the player is red. */
   hit: boolean;
   /** 1 while connected, then down to 0 while fading out. */
@@ -43,6 +47,44 @@ export function isColliding(player: Point, ball: Point): boolean {
   const dy = player.y - ball.y;
   const reach = PLAYER_RADIUS + BALL_RADIUS;
   return dx * dx + dy * dy <= reach * reach;
+}
+
+/** Two eyes touch when their circles overlap. */
+export function eyesTouch(a: Point, b: Point): boolean {
+  const dx = a.x - b.x;
+  const dy = a.y - b.y;
+  const reach = 2 * PLAYER_RADIUS;
+  return dx * dx + dy * dy <= reach * reach;
+}
+
+export interface Mixable extends Point {
+  /** Current hue (OKLCH degrees, see color.ts). */
+  hue: number;
+  /** The player's own hue, where the colour goes back to. */
+  baseHue: number;
+}
+
+/**
+ * One step of the colour mix, dtMs long. Every eye moves towards the mean hue of itself and the eyes it
+ * touches (computed from the hues before the step, so the order of the players does not matter); an eye
+ * that touches nobody drifts back to its own hue. Exponential steps: smooth at any tick rate.
+ */
+export function mixHues(players: readonly Mixable[], dtMs: number): number[] {
+  const dt = Math.max(0, Math.min(dtMs, 1000));
+  const toward = 1 - Math.exp(-dt / MIX_MS);
+  const back = 1 - Math.exp(-dt / RETURN_MS);
+  return players.map((p, i) => {
+    let sum = p.hue;
+    let n = 1;
+    players.forEach((q, j) => {
+      if (j !== i && eyesTouch(p, q)) {
+        sum += q.hue;
+        n++;
+      }
+    });
+    if (n === 1) return p.hue + (p.baseHue - p.hue) * back;
+    return p.hue + (sum / n - p.hue) * toward;
+  });
 }
 
 /** Starts from the centre in a random direction, never too close to an axis. */

@@ -58,7 +58,10 @@ function render(ball: Point, players: PlayerState[]) {
   for (const p of players) {
     seen.add(p.id);
     const el = eyeFor(p.id);
-    el.style.setProperty('--hue', String(p.hue));
+    if (el.dataset.color !== p.color) {
+      el.dataset.color = p.color;
+      el.style.setProperty('--iris', p.color);
+    }
     el.classList.toggle('hit', p.hit);
     // my own eye follows the pointer right away, without waiting for the round trip
     place(el, p.id === myId && mine ? mine : p, PLAYER_RADIUS, p.size);
