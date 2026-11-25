@@ -1,24 +1,23 @@
-# Use the official Node.js image
-FROM node:18
-
-# Set the working directory
+# One image: the Node server serves the page, its scripts and the WebSocket (/ws) on the same port.
+FROM node:26.13.1-alpine3.24 AS build
 WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci --no-fund --no-audit
+COPY tsconfig.json tsconfig.client.json ./
+COPY src ./src
+RUN npm run build
 
-# Copy package.json and package-lock.json to the container
-COPY package*.json ./
-
-# Install dependencies
-RUN npm install
-
-# Copy the rest of the application code to the container
-COPY . .
-
-# Build the TypeScript files
-RUN npx tsc
-
-# Expose the port for the http-server (default: 8080)
-EXPOSE 9090
+FROM node:26.13.1-alpine3.24
+ENV NODE_ENV=production PORT=8080
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev --no-fund --no-audit && npm cache clean --force
+COPY --from=build /app/dist/server ./dist/server
+COPY --from=build /app/dist/shared ./dist/shared
+COPY --from=build /app/dist/client ./dist/client
+COPY public ./public
+USER node
 EXPOSE 8080
-
-# Start the concurrently command
-CMD ["npx", "concurrently", "\"http-server\"", "\"wait-on dist/index.js && node --watch dist/index.js\""]
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s \
+  CMD node -e "fetch('http://127.0.0.1:'+process.env.PORT+'/healthz').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"
+CMD ["node", "dist/server/main.js"]

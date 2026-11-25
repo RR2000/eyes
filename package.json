@@ -1,25 +1,25 @@
 {
-    "name": "drawings",
-    "version": "1.0.0",
-    "main": "index.js",
-    "scripts": {
-        "start": "npx tsc && (concurrently 'http-server' 'wait-on dist/index.js && node --watch dist/index.js')",
-        "be": "tsc && node --watch dist/index.js",
-        "test": "echo \"Error: no test specified\" && exit 1"
-    },
-    "type": "module",
-    "author": "",
-    "license": "ISC",
-    "description": "",
-    "dependencies": {
-        "concurrently": "^9.0.1",
-        "http-server": "^14.1.1",
-        "typescript": "^5.6.3",
-        "wait-on": "^8.0.1",
-        "ws": "^8.18.0"
-    },
-    "devDependencies": {
-        "@types/ws": "^8.5.12",
-        "ts-node": "^10.9.2"
-    }
+  "name": "simple-game",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Multiplayer eyes that follow the pointer, over a WebSocket. Avoid the ball.",
+  "license": "ISC",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json && tsc -p tsconfig.client.json",
+    "start": "node dist/server/main.js",
+    "dev": "npm run build && node dist/server/main.js",
+    "test": "npm run build && node --test \"dist/test/*.test.js\""
+  },
+  "dependencies": {
+    "ws": "^8.22.2"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.2",
+    "@types/ws": "^8.18.2",
+    "typescript": "^7.0.2"
+  }
 }
