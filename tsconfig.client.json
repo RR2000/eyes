@@ -1,0 +1,9 @@
+{
+  // Browser code: plain ES modules served as they are, no bundler.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "types": []
+  },
+  "include": ["src/client", "src/shared"]
+}

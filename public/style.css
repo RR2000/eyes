@@ -1,0 +1,164 @@
+:root {
+  --page: cornflowerblue;
+  --field: darkgreen;
+  color-scheme: light;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--page);
+  overscroll-behavior: none;
+}
+
+body {
+  /* the page is a touch pad: no scrolling, zooming or text selection while dragging a finger */
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  font: 15px/1.3 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+/* the square playing field, as large as the screen allows; coordinates on the wire are relative to it */
+#square {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  width: min(100vw, 100vh);
+  height: min(100vw, 100vh);
+  width: min(100vw, 100dvh);
+  height: min(100vw, 100dvh);
+  transform: translate(-50%, -50%);
+  overflow: hidden;
+  background: var(--field);
+}
+
+#status {
+  position: fixed;
+  left: 8px;
+  bottom: max(8px, env(safe-area-inset-bottom));
+  margin: 0;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: rgb(0 0 0 / 0.65);
+  color: #fff;
+  pointer-events: none;
+}
+
+.noscript {
+  position: fixed;
+  inset: 40% 0 auto;
+  margin: 0;
+  text-align: center;
+  color: #fff;
+}
+
+/* one eye per player: 10% of the field, placed by translate() from main.ts */
+.eye {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 10%;
+  height: 10%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 40%, #fcfcfc, #efeff1 66%, #9b5050);
+  transition: transform 60ms linear;
+  will-change: transform;
+}
+
+.eye.me {
+  transition: none;
+  box-shadow: 0 0 0 3px #fff, 0 0 0 5px rgb(0 0 0 / 0.5);
+  z-index: 1;
+}
+
+.iris {
+  position: absolute;
+  width: 40%;
+  height: 40%;
+  margin: 30%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 50% 50%,
+    hsl(var(--hue, 200) 70% 30%) 0%,
+    hsl(var(--hue, 200) 85% 70%) 30%,
+    hsl(var(--hue, 200) 50% 45%) 100%
+  );
+  animation: move-eye-skew 5s ease-out infinite;
+}
+
+.eye.hit .iris {
+  background: radial-gradient(circle at 50% 50%, #7a0000 0%, #ff3b3b 30%, #c40000 100%);
+}
+
+.iris::before {
+  content: "";
+  position: absolute;
+  width: 37.5%;
+  height: 37.5%;
+  top: 31.25%;
+  left: 31.25%;
+  border-radius: 50%;
+  background: #000;
+}
+
+.iris::after {
+  content: "";
+  position: absolute;
+  width: 31.25%;
+  height: 31.25%;
+  top: 18.75%;
+  left: 18.75%;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 0.2);
+}
+
+@keyframes move-eye-skew {
+  0% {
+    transform: none;
+  }
+  20% {
+    transform: translate(-55%, 25%) skewX(15deg) skewY(-10deg) scale(0.95);
+  }
+  25%,
+  44% {
+    transform: none;
+  }
+  50%,
+  60% {
+    transform: translate(55%, -32%) skewX(5deg) skewY(2deg) scaleX(0.95);
+  }
+  66%,
+  100% {
+    transform: none;
+  }
+}
+
+/* the ball: 6% of the field */
+.ball {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 6%;
+  height: 6%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #777, #111 55%, #000);
+  box-shadow: 0 0 0 2px rgb(255 255 255 / 0.6);
+  transition: transform 60ms linear;
+  will-change: transform;
+  z-index: 2;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .iris {
+    animation: none;
+  }
+  .eye,
+  .ball {
+    transition: none;
+  }
+}
