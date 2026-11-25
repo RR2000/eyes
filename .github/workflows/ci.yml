@@ -57,10 +57,10 @@ jobs:
             org.opencontainers.image.description=Eyes: multiplayer eyes that follow the pointer
           cache-from: type=gha
           cache-to: type=gha,mode=max
-      # PRs: the image starts, answers on /healthz and serves the page
+      # PRs: the image starts (read-only, no capabilities, as in production), answers on /healthz and serves the page
       - if: github.event_name != 'push'
         run: |
-          docker run -d --name eyes -p 8080:8080 ghcr.io/rr2000/simple-game:main
+          docker run -d --name eyes --read-only --cap-drop ALL -p 8080:8080 ghcr.io/rr2000/simple-game:main
           for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8080/healthz && break; sleep 1; done
           curl -fsS http://127.0.0.1:8080/ | grep -q '/js/client/main.js'
           curl -fsS -o /dev/null http://127.0.0.1:8080/js/shared/game.js
