@@ -2,8 +2,7 @@ name: CI
 
 # PRs and main: build and tests (including real WebSockets against the server).
 # PRs: the image is built and started once, not pushed.
-# main: image pushed to GitHub Container Registry, :sha-<commit> and :main, under two names during the rename:
-# ghcr.io/rr2000/eyes (new, like the repo) and ghcr.io/rr2000/simple-game (old).
+# main: image ghcr.io/rr2000/eyes pushed to GitHub Container Registry, :sha-<commit> and :main.
 on:
   push:
     branches: [main]
@@ -51,8 +50,6 @@ jobs:
           push: ${{ github.event_name == 'push' }}
           load: ${{ github.event_name != 'push' }}
           tags: |
-            ghcr.io/rr2000/simple-game:${{ steps.tag.outputs.tag }}
-            ghcr.io/rr2000/simple-game:main
             ghcr.io/rr2000/eyes:${{ steps.tag.outputs.tag }}
             ghcr.io/rr2000/eyes:main
           labels: |
