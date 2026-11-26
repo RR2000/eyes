@@ -2,7 +2,8 @@ name: CI
 
 # PRs and main: build and tests (including real WebSockets against the server).
 # PRs: the image is built and started once, not pushed.
-# main: image pushed to GitHub Container Registry, ghcr.io/rr2000/simple-game:sha-<commit> and :main.
+# main: image pushed to GitHub Container Registry, :sha-<commit> and :main, under two names during the rename:
+# ghcr.io/rr2000/eyes (new, like the repo) and ghcr.io/rr2000/simple-game (old).
 on:
   push:
     branches: [main]
@@ -52,15 +53,17 @@ jobs:
           tags: |
             ghcr.io/rr2000/simple-game:${{ steps.tag.outputs.tag }}
             ghcr.io/rr2000/simple-game:main
+            ghcr.io/rr2000/eyes:${{ steps.tag.outputs.tag }}
+            ghcr.io/rr2000/eyes:main
           labels: |
-            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.source=https://github.com/RR2000/eyes
             org.opencontainers.image.description=Eyes: multiplayer eyes that follow the pointer
           cache-from: type=gha
           cache-to: type=gha,mode=max
       # PRs: the image starts (read-only, no capabilities, as in production), answers on /healthz and serves the page
       - if: github.event_name != 'push'
         run: |
-          docker run -d --name eyes --read-only --cap-drop ALL -p 8080:8080 ghcr.io/rr2000/simple-game:main
+          docker run -d --name eyes --read-only --cap-drop ALL -p 8080:8080 ghcr.io/rr2000/eyes:main
           for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8080/healthz && break; sleep 1; done
           curl -fsS http://127.0.0.1:8080/ | grep -q '/js/client/main.js'
           curl -fsS -o /dev/null http://127.0.0.1:8080/js/shared/game.js

@@ -1,5 +1,5 @@
 {
-  "name": "simple-game",
+  "name": "eyes",
   "version": "1.0.0",
   "private": true,
   "description": "Multiplayer eyes that follow the pointer, over a WebSocket. Avoid the ball.",

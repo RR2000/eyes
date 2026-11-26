@@ -54,8 +54,8 @@ npm test             # build, then unit tests and tests with real WebSockets
 With Docker:
 
 ```bash
-docker build -t simple-game .
-docker run --rm -p 8080:8080 simple-game
+docker build -t eyes .
+docker run --rm -p 8080:8080 eyes
 ```
 
 Environment variables:
@@ -74,4 +74,5 @@ every 30 seconds, so a proxy read timeout of a minute or more is enough.
 ## Releases
 
 CI (`.github/workflows/ci.yml`) runs the tests on every pull request and builds the image. On `main` it pushes
-`ghcr.io/rr2000/simple-game:main` and `:sha-<commit>`.
+`ghcr.io/rr2000/eyes:main` and `:sha-<commit>`; during the rename the same tags are also pushed under the old name
+`ghcr.io/rr2000/simple-game`.
